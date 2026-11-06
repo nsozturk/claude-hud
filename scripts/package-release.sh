@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Packaging/Info.plist)
 OUT="build/release"
-rm -rf "$OUT" build/arch build/stage-* build/dmg       # only this script's own output
+rm -rf "$OUT" build/arch build/stage-*                 # only this script's own output
 mkdir -p "$OUT" build/arch
 
 SOURCES=$(ls */*.swift | grep -v '^Tests/')
@@ -44,10 +44,15 @@ for variant in universal arm64 x86_64; do
 done
 
 echo "→ DMG"
-mkdir -p build/dmg
-cp -R "build/stage-universal/Claude HUD.app" build/dmg/
-ln -s /Applications build/dmg/Applications
-hdiutil create -quiet -volname "Claude HUD $VERSION" -srcfolder build/dmg -ov -format UDZO "$OUT/Claude-HUD-$VERSION.dmg"
+# Branded window (background + icon layout) via dmgbuild, installed once into build/.
+DMGBUILD="build/dmgbuild-venv/bin/dmgbuild"
+if [ ! -x "$DMGBUILD" ]; then
+  python3 -m venv build/dmgbuild-venv && build/dmgbuild-venv/bin/pip -q install dmgbuild
+fi
+"$DMGBUILD" -s Packaging/dmg/settings.py \
+  -D app="build/stage-universal/Claude HUD.app" \
+  -D background=Packaging/dmg/background.tiff \
+  "Claude HUD $VERSION" "$OUT/Claude-HUD-$VERSION.dmg"
 
 DMG_SHA=$(shasum -a 256 "$OUT/Claude-HUD-$VERSION.dmg" | cut -d' ' -f1)
 cat > "$OUT/claude-hud.rb" <<CASK

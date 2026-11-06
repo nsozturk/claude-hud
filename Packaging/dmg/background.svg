@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="480" viewBox="0 0 660 480">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#141417"/>
+      <stop offset="1" stop-color="#0D0D0F"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="330" cy="10" r="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D96B43" stop-opacity="0.30"/>
+      <stop offset="0.55" stop-color="#D96B43" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#D96B43" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#EE855A" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#FFE3D3"/>
+      <stop offset="1" stop-color="#EE855A" stop-opacity="0"/>
+    </linearGradient>
+    <marker id="head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.6" markerHeight="3.6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#EE855A"/>
+    </marker>
+  </defs>
+
+  <rect width="660" height="480" fill="url(#bg)"/>
+  <rect width="660" height="480" fill="url(#glow)"/>
+
+  <!-- notch with a card dropping out of it -->
+  <path d="M255,0 H405 V12 a12,12 0 0 1 -12,12 H267 a12,12 0 0 1 -12,-12 z" fill="#000"/>
+  <rect x="220" y="32" width="220" height="50" rx="12" fill="#141417" stroke="#FFFFFF" stroke-opacity="0.09"/>
+  <circle cx="238" cy="49" r="4" fill="#D96B43"/>
+  <rect x="250" y="46" width="64" height="6" rx="3" fill="#F5F5F2" fill-opacity="0.85"/>
+  <rect x="236" y="62" width="120" height="5" rx="2.5" fill="#AEAEB5" fill-opacity="0.55"/>
+  <rect x="382" y="58" width="44" height="14" rx="5" fill="#D96B43"/>
+  <rect x="250" y="80" width="160" height="2" rx="1" fill="url(#beam)"/>
+
+  <!-- drag arrow between the app icon (x=165) and Applications (x=495) -->
+  <path d="M262,198 C310,172 350,172 398,198" fill="none" stroke="#EE855A" stroke-width="3"
+        stroke-linecap="round" stroke-dasharray="1 9" marker-end="url(#head)"/>
+
+  <!-- label plates: Finder draws dark labels in Light mode and white in Dark mode; a mid tone reads in both -->
+  <rect x="105" y="258" width="120" height="22" rx="11" fill="#8F8A84" fill-opacity="0.9"/>
+  <rect x="435" y="258" width="120" height="22" rx="11" fill="#8F8A84" fill-opacity="0.9"/>
+
+  <text x="330" y="318" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="15" font-weight="600" fill="#F5F5F2">Drag Claude HUD to Applications</text>
+  <text x="330" y="338" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="11" fill="#AEAEB5">First launch: System Settings › Privacy &amp; Security › Open Anyway</text>
+</svg>
