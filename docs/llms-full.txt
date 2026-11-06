@@ -84,10 +84,7 @@ Get the latest files from **[Releases](https://github.com/nsozturk/claude-hud/re
 | `Claude-HUD-<version>-x86_64.zip` | Intel only (smaller) |
 | `SHA256SUMS.txt` | Checksums: `shasum -a 256 -c SHA256SUMS.txt` |
 
-The app is not notarized by Apple yet, so the first launch is blocked with "Apple could not verify…". Open it once in one of these ways:
-
-- **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to Claude HUD; or
-- in Terminal: `xattr -dr com.apple.quarantine "/Applications/Claude HUD.app"`
+The app is signed with a Developer ID and notarized by Apple, so it opens like any other app.
 
 ### Homebrew
 
