@@ -6,7 +6,9 @@
 #   Claude-HUD-<v>-x86_64.zip          Intel only
 #   SHA256SUMS.txt                     checksums of all of the above
 #   claude-hud.rb                      Homebrew cask for the DMG (put it in a tap)
-# SIGN_IDENTITY="Developer ID Application: …" signs for distribution; default is ad hoc.
+# SIGN_IDENTITY="Developer ID Application: …" signs for distribution (hardened runtime + timestamp);
+# default is ad hoc. NOTARY_PROFILE=<notarytool keychain profile> also notarizes and staples
+# the app and the DMG (create the profile once with `xcrun notarytool store-credentials`).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -34,7 +36,15 @@ make_app() {  # $1 = binary, $2 = folder that receives "Claude HUD.app"
         --output-partial-info-plist "build/icon-partial.plist" >/dev/null 2>&1; then
     cp Packaging/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
   fi
-  codesign --force --deep -s "${SIGN_IDENTITY:--}" "$app"
+  codesign --force --deep --options runtime --timestamp -s "${SIGN_IDENTITY:-}" "$app" 2>/dev/null \
+    || codesign --force --deep -s "${SIGN_IDENTITY:--}" "$app"      # ad hoc: no runtime/timestamp
+  if [ -n "${NOTARY_PROFILE:-}" ]; then
+    echo "  notarizing $(basename "$2")…"
+    ditto -c -k --keepParent "$app" "build/notarize.zip"
+    xcrun notarytool submit build/notarize.zip --keychain-profile "$NOTARY_PROFILE" --wait | tail -2
+    xcrun stapler staple "$app"
+    rm -f build/notarize.zip
+  fi
 }
 
 for variant in universal arm64 x86_64; do
@@ -53,6 +63,14 @@ fi
   -D app="build/stage-universal/Claude HUD.app" \
   -D background=Packaging/dmg/background.tiff \
   "Claude HUD $VERSION" "$OUT/Claude-HUD-$VERSION.dmg"
+
+if [ -n "${NOTARY_PROFILE:-}" ]; then
+  echo "→ Notarizing the DMG"
+  codesign --force --timestamp -s "${SIGN_IDENTITY:-}" "$OUT/Claude-HUD-$VERSION.dmg"
+  xcrun notarytool submit "$OUT/Claude-HUD-$VERSION.dmg" --keychain-profile "$NOTARY_PROFILE" --wait | tail -2
+  xcrun stapler staple "$OUT/Claude-HUD-$VERSION.dmg"
+  spctl -a -vvv -t install "$OUT/Claude-HUD-$VERSION.dmg" 2>&1 | head -2
+fi
 
 DMG_SHA=$(shasum -a 256 "$OUT/Claude-HUD-$VERSION.dmg" | cut -d' ' -f1)
 cat > "$OUT/claude-hud.rb" <<CASK
