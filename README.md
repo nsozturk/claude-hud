@@ -44,6 +44,7 @@ No answer within two minutes? The card steps aside and Claude asks in its own wi
   `⌃⌥1…9` pick · `⌃⌥↵` choose / next / submit · `⌃⌥⎋` skip · `⌃⌥→` next card · `⌃⌥O` open the session · `⌃⌥C` copy · `⌃⌥Space` focus the panel. All but the number keys can be rebound.
 - **Compact pill**: show a waiting card as one line, open it on hover.
 - **Swipe** a card with two fingers (left skips, right shows the next), with trackpad haptics.
+- **Sounds** per card type (questions, permission prompts, next-step asks) from the macOS system sounds, with volume and preview.
 - **Quiet**: snooze for 15 min / 1 hour / until tomorrow, no sounds while the mic is in use, hidden from screen sharing.
 - **Free-text replies** with dictation, and drop files on a card to add their paths.
 - **Card transitions**: card deck, fly right, toss up, flip, drop in, fade, or none.

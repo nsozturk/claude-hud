@@ -192,6 +192,19 @@ public class HUDSettingsStore: ObservableObject {
     @Published public var stackDepth: Double {
         didSet { defaults.set(stackDepth, forKey: "hud_stackDepth") }
     }
+    /// Sound per card type (a macOS system sound name) and one volume for all.
+    @Published public var soundQuestion: String {
+        didSet { defaults.set(soundQuestion, forKey: "hud_soundQuestion") }
+    }
+    @Published public var soundPermission: String {
+        didSet { defaults.set(soundPermission, forKey: "hud_soundPermission") }
+    }
+    @Published public var soundSession: String {
+        didSet { defaults.set(soundSession, forKey: "hud_soundSession") }
+    }
+    @Published public var soundVolume: Double {
+        didSet { defaults.set(soundVolume, forKey: "hud_soundVolume") }
+    }
     @Published public var soundEnabled: Bool {
         didSet { defaults.set(soundEnabled, forKey: "hud_soundEnabled") }
     }
@@ -235,6 +248,10 @@ public class HUDSettingsStore: ObservableObject {
         
         self.notchVerticalOffset = CGFloat(defaults.double(forKey: "hud_notchVerticalOffset"))
         self.showInDock = defaults.bool(forKey: "hud_showInDock")
+        self.soundQuestion = defaults.string(forKey: "hud_soundQuestion") ?? "Glass"
+        self.soundPermission = defaults.string(forKey: "hud_soundPermission") ?? "Funk"
+        self.soundSession = defaults.string(forKey: "hud_soundSession") ?? "Pop"
+        self.soundVolume = defaults.object(forKey: "hud_soundVolume") as? Double ?? 0.7
         self.cardTransition = CardTransitionStyle(rawValue: defaults.string(forKey: "hud_cardTransition") ?? "") ?? .deck
         let depth = defaults.double(forKey: "hud_stackDepth"); self.stackDepth = depth > 0 ? depth : 14
         self.approvePermissions = defaults.object(forKey: "hud_approvePermissions") as? Bool ?? false

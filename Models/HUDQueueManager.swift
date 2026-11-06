@@ -52,7 +52,7 @@ public class HUDQueueManager: ObservableObject {
             dropScenarios()
             queue.append(event)
         }
-        HUDQuiet.playArrivalSound()
+        HUDQuiet.playArrivalSound(for: event)
     }
     
     public func enqueueBatch(_ events: [HUDNotificationEvent]) {

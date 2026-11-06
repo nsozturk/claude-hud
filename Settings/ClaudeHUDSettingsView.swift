@@ -120,6 +120,12 @@ public struct ClaudeHUDSettingsView: View {
                     toggle("Swipe gestures", "Two fingers on a card: swipe left to skip, right for the next card.", isOn: $settings.swipeGestures)
                     toggle("Haptics", "A trackpad tap when a swipe lands.", isOn: $settings.haptics)
                     toggle("Sounds", "Play a soft sound when a card arrives.", isOn: $settings.soundEnabled)
+                    if settings.soundEnabled {
+                        soundRow("Questions", $settings.soundQuestion)
+                        soundRow("Permission prompts", $settings.soundPermission)
+                        soundRow("Next-step asks", $settings.soundSession)
+                        tune("Volume", value: $settings.soundVolume, in: 0...1, format: { "\(Int($0 * 100))%" })
+                    }
                     HStack(spacing: 10) {
                         stat("Waiting", "\(queue.totalCount)", ClaudeHUDTheme.terracottaGlow)
                         stat("Answered", "\(queue.completedHistory.count)", ClaudeHUDTheme.emerald)
@@ -319,6 +325,28 @@ public struct ClaudeHUDSettingsView: View {
                     .foregroundColor(ClaudeHUDTheme.secondaryText)
             }
             Slider(value: value, in: range)
+        }
+    }
+
+    /// A system-sound picker with a play button; changing it also plays the new sound.
+    private func soundRow(_ title: String, _ name: Binding<String>) -> some View {
+        HStack(spacing: 8) {
+            Text(title).font(.system(size: 11.5)).foregroundColor(ClaudeHUDTheme.secondaryText)
+            Spacer(minLength: 4)
+            Picker("", selection: Binding(get: { name.wrappedValue },
+                                          set: { name.wrappedValue = $0; HUDQuiet.play($0) })) {
+                Text("None").tag("None")
+                ForEach(HUDQuiet.systemSounds, id: \.self) { Text($0).tag($0) }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .fixedSize()
+            Button { HUDQuiet.play(name.wrappedValue) } label: {
+                Image(systemName: "play.circle.fill").font(.system(size: 14))
+                    .foregroundColor(ClaudeHUDTheme.terracottaGlow)
+            }
+            .buttonStyle(.plain)
+            .help("Play")
         }
     }
 

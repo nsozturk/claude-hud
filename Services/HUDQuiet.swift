@@ -50,11 +50,39 @@ public enum HUDQuiet {
         return running != 0
     }
 
+    /// macOS system sounds people can pick from (System Settings uses the same set).
+    public static let systemSounds: [String] = {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: "/System/Library/Sounds")) ?? []
+        let list = names.filter { $0.hasSuffix(".aiff") }.map { String($0.dropLast(5)) }.sorted()
+        return list.isEmpty ? ["Glass", "Funk", "Pop", "Ping", "Tink"] : list
+    }()
+
+    public static func soundName(for event: HUDNotificationEvent) -> String {
+        let s = HUDSettingsStore.shared
+        switch event {
+        case .permission: return s.soundPermission
+        case .sessionAsk: return s.soundSession
+        default: return s.soundQuestion
+        }
+    }
+
+    /// Sounds still playing; held so a copy is not freed mid-play.
+    private static var playing: [NSSound] = []
+
+    /// Plays a named sound at the chosen volume (a copy, so quick arrivals can overlap).
+    public static func play(_ name: String) {
+        guard name != "None", let sound = NSSound(named: name)?.copy() as? NSSound else { return }
+        sound.volume = Float(HUDSettingsStore.shared.soundVolume)
+        playing.removeAll { !$0.isPlaying }
+        playing.append(sound)
+        sound.play()
+    }
+
     /// Sound for a new card, unless muted, snoozed, or in a call.
-    public static func playArrivalSound() {
+    public static func playArrivalSound(for event: HUDNotificationEvent) {
         let s = HUDSettingsStore.shared
         guard s.soundEnabled, !s.isSnoozed, !(s.quietDuringCalls && micInUse()) else { return }
-        NSSound(named: "Glass")?.play()
+        play(soundName(for: event))
     }
 
     public static func haptic() {
