@@ -1,0 +1,28 @@
+# Claude HUD
+
+> Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.
+
+## What it does
+
+When a Claude Code session stops to ask you something — a multiple-choice question, "Allow this command?", or the next-step box of the Claude desktop app — a card drops out of the notch (or floats at the top right). Pick an answer with a click or a shortcut and keep working. Nothing is answered without your click or key press. It makes no network requests and has no telemetry. It requires macOS 14 or later and is MIT licensed. It is an independent project, not affiliated with Anthropic.
+
+## Install
+
+Build from source with the Swift toolchain (Xcode or Command Line Tools):
+
+    git clone https://github.com/nsozturk/claude-hud.git
+    cd claude-hud
+    ./scripts/build-app.sh
+    cp -R "build/Claude HUD.app" /Applications/
+    open "/Applications/Claude HUD.app"
+
+## Use
+
+On first launch a short welcome lets you choose where cards appear (notch or top right) and adds a PreToolUse hook for AskUserQuestion to ~/.claude/settings.json. Click an option or press Control-Option-1 to 9, then Control-Option-Return. Permission cards (Allow / Always allow / Deny) are off by default and enabled in Settings > Permissions. Accessibility permission is optional and only needed for the Claude desktop app's next-step buttons.
+
+## Links
+
+- [README](https://github.com/nsozturk/claude-hud/blob/main/README.md): full documentation
+- [AGENTS.md](https://github.com/nsozturk/claude-hud/blob/main/AGENTS.md): instructions for AI coding agents
+- [Documentation page](https://nsozturk.github.io/claude-hud/): searchable docs, FAQ, shortcuts
+- [Releases](https://github.com/nsozturk/claude-hud/releases): release history

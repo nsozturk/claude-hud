@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Claude Code hook for Claude HUD: answer questions and permission prompts from the notch.
+
+Handles two hook events (install both in ~/.claude/settings.json, or let the app do it):
+  PreToolUse, matcher "AskUserQuestion"  -> the chosen answers go back as updatedInput
+  PermissionRequest, matcher "*"         -> Allow / Always allow / Deny from the HUD card
+
+Every failure path exits 0 with no output, so Claude shows its own UI:
+HUD not running, feature off in the HUD, user pressed Skip / x, HUD timeout, malformed reply.
+"""
+import json
+import socket
+import sys
+
+SOCK = "/tmp/claude-hud.sock"
+WAIT_S = 140  # a little longer than the HUD's own 120 s timeout
+
+
+def ask_hud(payload):
+    """Send the hook payload to the HUD and wait for its JSON reply ({} when none)."""
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(2)
+        s.connect(SOCK)
+    except OSError:
+        return {}  # HUD not running
+    try:
+        s.sendall(json.dumps({**payload, "wait_for_answer": True}).encode())
+        s.shutdown(socket.SHUT_WR)  # tells the HUD the payload is complete
+        s.settimeout(WAIT_S)
+        chunks = []
+        while True:
+            b = s.recv(65536)
+            if not b:
+                break
+            chunks.append(b)
+    except OSError:
+        return {}
+    finally:
+        s.close()
+    try:
+        return json.loads(b"".join(chunks) or b"{}")
+    except ValueError:
+        return {}
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except Exception:
+        return
+    event = payload.get("hook_event_name")
+
+    if event == "PreToolUse" and payload.get("tool_name") == "AskUserQuestion":
+        answers = ask_hud(payload).get("answers")
+        if not answers:
+            return
+        # updatedInput replaces the tool input: keep the original questions, add the answers.
+        print(json.dumps({"hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "permissionDecisionReason": "Answered in Claude HUD",
+            "updatedInput": {**payload.get("tool_input", {}), "answers": answers},
+        }}))
+
+    elif event == "PermissionRequest":
+        decision = ask_hud(payload).get("decision")
+        if decision in ("allow", "always"):
+            out = {"behavior": "allow"}
+            if decision == "always" and payload.get("permission_suggestions"):
+                # Claude's own "always allow" rule for this call, as its dialog would add it.
+                out["updatedPermissions"] = payload["permission_suggestions"]
+        elif decision == "deny":
+            out = {"behavior": "deny", "message": "Denied from Claude HUD"}
+        else:
+            return
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PermissionRequest", "decision": out}}))
+
+
+if __name__ == "__main__":
+    main()

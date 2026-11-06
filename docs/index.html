@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude HUD — Answer Claude Code from your MacBook notch</title>
+
+  <meta name="description" content="Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.">
+  <meta name="keywords" content="claude hud, claude code, macos, notch, menu bar app, dynamic island, swiftui, claude code hooks, developer tools, ai agent">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nsozturk.github.io/claude-hud/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nsozturk.github.io/claude-hud/">
+  <meta property="og:title" content="Claude HUD — Answer Claude Code from your MacBook notch">
+  <meta property="og:description" content="Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.">
+  <meta property="og:image" content="https://nsozturk.github.io/claude-hud/assets/banner.png">
+  <meta property="og:site_name" content="Claude HUD Documentation">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://nsozturk.github.io/claude-hud/">
+  <meta name="twitter:title" content="Claude HUD — Answer Claude Code from your MacBook notch">
+  <meta name="twitter:description" content="Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.">
+  <meta name="twitter:image" content="https://nsozturk.github.io/claude-hud/assets/banner.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Claude HUD",
+    "operatingSystem": "macOS 14+",
+    "applicationCategory": "DeveloperApplication",
+    "description": "Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.",
+    "url": "https://nsozturk.github.io/claude-hud/",
+    "image": "https://nsozturk.github.io/claude-hud/assets/banner.png",
+    "softwareVersion": "1.0.0",
+    "license": "https://github.com/nsozturk/claude-hud/blob/main/LICENSE",
+    "codeRepository": "https://github.com/nsozturk/claude-hud",
+    "downloadUrl": "https://github.com/nsozturk/claude-hud",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Enes Öztürk",
+      "url": "https://github.com/nsozturk"
+    }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I answer Claude Code questions from the MacBook notch?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Install Claude HUD, let the welcome add the question hook, and keep working. When Claude Code asks a multiple-choice question, a card appears in the notch; click an option or press ⌃⌥1…9 and ⌃⌥↵."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work without a notch?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Switch to Top right and cards float in the top-right corner of your main display."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it need Accessibility permission?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Only for one thing: the Claude desktop app's next-step buttons, where the HUD has to type your reply into the session. Questions, permission prompts and all shortcuts work without it."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can it approve commands on its own?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Every answer needs your click or key press. If you do nothing, Claude asks in its own window after two minutes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it send my data anywhere?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. It talks to Claude Code only through a local Unix socket and reads local transcript files. It makes no network requests."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it an alternative to NotchNook or Vibe Island?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Partly. It focuses on one job — answering an AI coding agent fast — and leaves out media, file shelves and calendar widgets. It is free and open source."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #0D0D0F;
+      --card-bg: #141417;
+      --sidebar-bg: #101013;
+      --border: #26262C;
+      --text: #F5F5F2;
+      --text-muted: #AEAEB5;
+      --accent: #D96B43;
+      --accent-2: #EE855A;
+      --amber: #F59F26;
+      --accent-glow: rgba(217, 107, 67, 0.15);
+      --code-bg: #08080A;
+      --chip-bg: #1E1E23;
+      --sidebar-width: 280px;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Helvetica Neue", Arial, sans-serif;
+      --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+    a { color: var(--accent-2); }
+
+    header.navbar {
+      position: sticky; top: 0; z-index: 50; height: 64px;
+      background: rgba(13, 13, 15, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 800; font-size: 1.2rem; color: #fff; text-decoration: none;
+    }
+    .brand .dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+    .brand .badge {
+      background: var(--accent-glow); color: var(--accent-2);
+      border: 1px solid var(--accent);
+      font-size: 0.75rem; padding: 2px 8px; border-radius: 9999px; font-weight: 600;
+    }
+    .nav-actions { display: flex; align-items: center; gap: 16px; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: color .15s; }
+    .nav-link:hover { color: #fff; }
+    .btn-github {
+      background: var(--chip-bg); color: #fff; padding: 6px 14px; border-radius: 8px;
+      text-decoration: none; font-size: 0.85rem; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+      border: 1px solid #34343C; transition: all .15s;
+    }
+    .btn-github:hover { background: #2A2A31; }
+
+    .container { display: flex; max-width: 1440px; margin: 0 auto; }
+
+    aside.sidebar {
+      width: var(--sidebar-width); flex-shrink: 0;
+      position: sticky; top: 64px; height: calc(100vh - 64px);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px; overflow-y: auto;
+    }
+    .search-box { margin-bottom: 20px; }
+    .search-box input {
+      width: 100%; background: var(--chip-bg); border: 1px solid #34343C;
+      border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 0.85rem; outline: none;
+      font-family: var(--sans);
+    }
+    .search-box input:focus { border-color: var(--accent); }
+    .nav-section-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--text-muted); margin-bottom: 8px; font-weight: 700; padding-left: 8px;
+    }
+    .nav-section { margin-bottom: 24px; }
+    .nav-menu-item {
+      display: block; padding: 7px 12px; color: var(--text-muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500; border-radius: 6px; margin-bottom: 2px;
+      border-left: 3px solid transparent; transition: all .15s;
+    }
+    .nav-menu-item:hover, .nav-menu-item.active {
+      color: #fff; background: rgba(217, 107, 67, 0.12); border-left-color: var(--accent);
+    }
+    #noResults { display: none; color: var(--text-muted); font-size: 0.9rem; padding: 8px; }
+
+    main.content { flex: 1; min-width: 0; padding: 40px 60px; max-width: 960px; }
+    .banner-hero {
+      width: 100%; border-radius: 12px; border: 1px solid var(--border);
+      margin-bottom: 32px; overflow: hidden; display: block;
+    }
+    .banner-hero img { width: 100%; height: auto; display: block; }
+
+    h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.75rem; font-weight: 700; margin: 8px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.1rem; font-weight: 600; margin: 22px 0 8px; color: #fff; }
+    p { margin-bottom: 16px; color: #D4D4D8; }
+    ul, ol { margin: 0 0 16px 22px; color: #D4D4D8; }
+    li { margin-bottom: 6px; }
+    section { margin-bottom: 44px; }
+    strong { color: #fff; }
+
+    pre {
+      background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; overflow-x: auto; margin: 16px 0 24px; position: relative;
+    }
+    code { font-family: var(--mono); font-size: 0.86rem; }
+    p code, li code, td code {
+      background: var(--chip-bg); color: #F5F5F2; padding: 2px 6px; border-radius: 4px; font-size: 0.83rem;
+    }
+    pre code { color: #E8E8EA; white-space: pre; }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px; background: var(--chip-bg);
+      color: var(--text-muted); border: 1px solid #34343C; padding: 4px 8px;
+      border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all .15s;
+      font-family: var(--sans);
+    }
+    .copy-btn:hover { color: #fff; background: #2A2A31; }
+
+    table { width: 100%; border-collapse: collapse; margin: 20px 0 30px; display: block; overflow-x: auto; }
+    th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; font-size: 0.9rem; vertical-align: top; }
+    th { background: var(--card-bg); color: #fff; font-weight: 600; }
+    td { color: #D4D4D8; }
+
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px; margin: 24px 0;
+    }
+    .feature-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .feature-card h4 { font-size: 1.02rem; margin-bottom: 8px; color: #fff; }
+    .feature-card p { font-size: 0.88rem; margin: 0; color: var(--text-muted); }
+
+    .callout {
+      background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--amber);
+      border-radius: 8px; padding: 14px 18px; margin: 18px 0; color: #D4D4D8; font-size: 0.92rem;
+    }
+    .callout p { margin: 0; }
+    .lead { font-size: 1.12rem; color: #fff; }
+
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px 18px; margin-bottom: 12px; }
+    .faq-item h3 { margin: 14px 0 6px; }
+    .faq-item p { margin-bottom: 14px; }
+
+    footer {
+      margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border);
+      font-size: 0.85rem; color: var(--text-muted); text-align: center;
+    }
+    footer p { color: var(--text-muted); margin-bottom: 8px; }
+
+    @media (max-width: 900px) {
+      aside.sidebar { display: none; }
+      main.content { padding: 24px 16px; }
+      .nav-link { display: none; }
+      h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="#overview" class="brand">
+      <span class="dot"></span>
+      Claude HUD
+      <span class="badge">v1.0.0</span>
+    </a>
+    <div class="nav-actions">
+      <a href="#install" class="nav-link">Install</a>
+      <a href="#shortcuts" class="nav-link">Shortcuts</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+      <a href="https://github.com/nsozturk/claude-hud" target="_blank" rel="noopener" class="btn-github">
+        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div class="search-box">
+        <input type="text" id="docSearch" placeholder="Search documentation..." aria-label="Search documentation" autocomplete="off">
+      </div>
+      <div id="noResults">No matching sections.</div>
+
+      <div class="nav-section" id="nav-start">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="#overview" class="nav-menu-item active" data-target="overview">Overview</a>
+        <a href="#what-it-does" class="nav-menu-item" data-target="what-it-does">What it does</a>
+        <a href="#features" class="nav-menu-item" data-target="features">Features</a>
+        <a href="#requirements" class="nav-menu-item" data-target="requirements">Requirements</a>
+        <a href="#install" class="nav-menu-item" data-target="install">Install</a>
+        <a href="#setup" class="nav-menu-item" data-target="setup">Setup</a>
+      </div>
+
+      <div class="nav-section" id="nav-use">
+        <div class="nav-section-title">Using Claude HUD</div>
+        <a href="#how-it-works" class="nav-menu-item" data-target="how-it-works">How it works</a>
+        <a href="#shortcuts" class="nav-menu-item" data-target="shortcuts">Shortcuts</a>
+        <a href="#privacy" class="nav-menu-item" data-target="privacy">Privacy</a>
+      </div>
+
+      <div class="nav-section" id="nav-more">
+        <div class="nav-section-title">More</div>
+        <a href="#faq" class="nav-menu-item" data-target="faq">FAQ</a>
+        <a href="#alternatives" class="nav-menu-item" data-target="alternatives">Alternatives</a>
+        <a href="#ai-agents" class="nav-menu-item" data-target="ai-agents">AI agents</a>
+        <a href="#license" class="nav-menu-item" data-target="license">License</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="banner-hero">
+        <img src="assets/banner.png" onerror="this.src='../assets/banner.png'" alt="Claude HUD — answer Claude Code from your MacBook notch">
+      </div>
+
+      <section id="overview">
+        <h1>Claude HUD</h1>
+        <p class="lead"><strong>Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.</strong></p>
+        <p>When a Claude Code session stops to ask you something — a multiple-choice question, "Allow this command?", or the next-step box of the Claude desktop app — a card drops out of the notch (or floats at the top right). Pick an answer with a click or a shortcut and keep working.</p>
+        <div class="callout">
+          <p>Claude HUD is an independent project. It is not made, endorsed or supported by Anthropic. "Claude" is a trademark of Anthropic, PBC; the name here only says which tool the app works with.</p>
+        </div>
+      </section>
+
+      <section id="what-it-does">
+        <h2>What it does</h2>
+        <table>
+          <thead>
+            <tr><th>Card</th><th>Comes from</th><th>Your answer goes back through</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Multiple-choice question (single or several in a row)</td>
+              <td>Claude Code's <code>AskUserQuestion</code> tool</td>
+              <td>a <code>PreToolUse</code> hook — Claude receives the answers directly</td>
+            </tr>
+            <tr>
+              <td>Permission prompt: <strong>Allow / Always allow / Deny</strong></td>
+              <td>Claude Code's <code>PermissionRequest</code> hook (opt-in)</td>
+              <td>the same hook; "Always allow" adds the rule Claude itself suggested</td>
+            </tr>
+            <tr>
+              <td>"Next step" question of a Claude desktop session</td>
+              <td>the session transcript in <code>~/.claude/projects</code></td>
+              <td>typed into that session's reply box and sent, like you would (needs Accessibility)</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>No answer within two minutes? The card steps aside and Claude asks in its own window as usual. Nothing is ever answered without your click or key press.</p>
+      </section>
+
+      <section id="features">
+        <h2>Features</h2>
+        <div class="feature-grid">
+          <div class="feature-card"><h4>Notch or top-right</h4><p>Placement of your choice, with a live preview on a drawn MacBook screen in the settings window.</p></div>
+          <div class="feature-card"><h4>Queue with depth</h4><p>One layer per waiting card under the current one and an "N more" counter.</p></div>
+          <div class="feature-card"><h4>Global shortcuts</h4><p>Work while a card is on screen — no Accessibility needed. All but the number keys can be rebound.</p></div>
+          <div class="feature-card"><h4>Compact pill</h4><p>Show a waiting card as one line, open it on hover.</p></div>
+          <div class="feature-card"><h4>Swipe</h4><p>Swipe a card with two fingers (left skips, right shows the next), with trackpad haptics.</p></div>
+          <div class="feature-card"><h4>Quiet</h4><p>Snooze for 15 min / 1 hour / until tomorrow, no sounds while the mic is in use, hidden from screen sharing.</p></div>
+          <div class="feature-card"><h4>Free-text replies</h4><p>Reply with dictation, and drop files on a card to add their paths.</p></div>
+          <div class="feature-card"><h4>Card transitions</h4><p>Card deck, fly right, toss up, flip, drop in, fade, or none.</p></div>
+          <div class="feature-card"><h4>Scanner line</h4><p>Along the card edge: 10 patterns, 12 color presets plus any custom color, speed, thickness, beam, glow, trail, direction.</p></div>
+          <div class="feature-card"><h4>Menu bar</h4><p>Lives in the menu bar; Show in Dock is a switch. First launch walks you through setup.</p></div>
+        </div>
+      </section>
+
+      <section id="requirements">
+        <h2>Requirements</h2>
+        <ul>
+          <li>macOS 14 Sonoma or later (a MacBook with a notch is best; any Mac works in top-right mode)</li>
+          <li>Claude Code (CLI or the Claude desktop app)</li>
+          <li>To build: the Swift toolchain from Xcode or the Command Line Tools (<code>xcode-select --install</code>). Xcode 26+ also compiles the new-style app icon; older toolchains fall back to the classic icon.</li>
+        </ul>
+      </section>
+
+      <section id="install">
+        <h2>Install</h2>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>git clone https://github.com/nsozturk/claude-hud.git
+cd claude-hud
+./scripts/build-app.sh            # builds "build/Claude HUD.app"
+cp -R "build/Claude HUD.app" /Applications/
+open "/Applications/Claude HUD.app"</code></pre>
+        <p>The build is signed ad hoc. To keep macOS permissions across rebuilds, sign with your own certificate:</p>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./scripts/build-app.sh</code></pre>
+      </section>
+
+      <section id="setup">
+        <h2>Setup</h2>
+        <p>On first launch Claude HUD shows a short welcome:</p>
+        <ol>
+          <li><strong>Where cards appear</strong> — notch or top right.</li>
+          <li><strong>Question hook</strong> — one click adds the hook below to <code>~/.claude/settings.json</code> (a <code>.bak</code> copy is kept).</li>
+          <li><strong>Accessibility</strong> (optional) — only for the desktop app's next-step buttons. The welcome opens the right System Settings page with Claude HUD already listed; flip its switch.</li>
+        </ol>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>{ "hooks": { "PreToolUse": [ { "matcher": "AskUserQuestion",
+    "hooks": [ { "type": "command", "command": "/Applications/Claude HUD.app/Contents/Resources/claude-hud-hook", "timeout": 150 } ] } ] } }</code></pre>
+        <p>Permission cards are off by default. Turn on <strong>Settings → Permissions → Approve tool permissions here</strong>, then install the permission hook from the same place.</p>
+      </section>
+
+      <section id="how-it-works">
+        <h2>How it works</h2>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>Claude Code ──hook──▶ claude-hud-hook ──/tmp/claude-hud.sock──▶ Claude HUD ──card──▶ you
+     ▲                                                              │
+     └──────────────── answer / allow / deny ◀──────────────────────┘
+
+~/.claude/projects/*.jsonl ──watched──▶ next-step questions ──▶ card ──▶ typed into the
+                                                                          session (Accessibility)</code></pre>
+        <ul>
+          <li><code>bin/claude-hud-hook</code> (Python 3, stdlib only) forwards the hook payload over a local Unix socket and waits for your answer. If the HUD is not running, it exits silently and Claude behaves exactly as without it.</li>
+          <li><strong>Transcript watcher</strong> reads only the tail of recently changed session files to find open questions, and drops a card as soon as you answer in Claude.</li>
+          <li><strong>No network access.</strong> No telemetry. A debug log is written to <code>/tmp/claude-hud.log</code>; it contains question text, so treat it as private.</li>
+        </ul>
+      </section>
+
+      <section id="shortcuts">
+        <h2>Shortcuts</h2>
+        <p>Global shortcuts work while a card is on screen — no Accessibility needed. All but the number keys can be rebound.</p>
+        <table>
+          <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><code>⌃⌥1…9</code></td><td>Pick an option</td></tr>
+            <tr><td><code>⌃⌥↵</code></td><td>Choose / next / submit</td></tr>
+            <tr><td><code>⌃⌥⎋</code></td><td>Skip</td></tr>
+            <tr><td><code>⌃⌥→</code></td><td>Next card</td></tr>
+            <tr><td><code>⌃⌥O</code></td><td>Open the session</td></tr>
+            <tr><td><code>⌃⌥C</code></td><td>Copy</td></tr>
+            <tr><td><code>⌃⌥Space</code></td><td>Focus the panel</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="privacy">
+        <h2>Privacy</h2>
+        <ul>
+          <li><strong>No network access.</strong> No telemetry. Claude HUD talks to Claude Code only through a local Unix socket and reads local transcript files. It makes no network requests.</li>
+          <li>Nothing is ever answered without your click or key press.</li>
+          <li>A debug log is written to <code>/tmp/claude-hud.log</code>; it contains question text, so treat it as private.</li>
+          <li>Cards can be hidden from screen sharing.</li>
+        </ul>
+      </section>
+
+      <section id="faq">
+        <h2>FAQ</h2>
+        <div class="faq-item">
+          <h3>How do I answer Claude Code questions from the MacBook notch?</h3>
+          <p>Install Claude HUD, let the welcome add the question hook, and keep working. When Claude Code asks a multiple-choice question, a card appears in the notch; click an option or press <code>⌃⌥1…9</code> and <code>⌃⌥↵</code>.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Does it work without a notch?</h3>
+          <p>Yes. Switch to <strong>Top right</strong> and cards float in the top-right corner of your main display.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Does it need Accessibility permission?</h3>
+          <p>Only for one thing: the Claude desktop app's next-step buttons, where the HUD has to type your reply into the session. Questions, permission prompts and all shortcuts work without it.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can it approve commands on its own?</h3>
+          <p>No. Every answer needs your click or key press. If you do nothing, Claude asks in its own window after two minutes.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Does it send my data anywhere?</h3>
+          <p>No. It talks to Claude Code only through a local Unix socket and reads local transcript files. It makes no network requests.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Is it an alternative to NotchNook or Vibe Island?</h3>
+          <p>Partly. It focuses on one job — answering an AI coding agent fast — and leaves out media, file shelves and calendar widgets. It is free and open source.</p>
+        </div>
+      </section>
+
+      <section id="alternatives">
+        <h2>Alternatives</h2>
+        <ul>
+          <li><strong>NotchNook</strong> — a general notch utility (media, files, widgets); its paid tier can approve Claude Code and Codex actions.</li>
+          <li><strong>Vibe Island</strong> — a notch app for watching and answering coding-agent sessions.</li>
+          <li><strong>boring.notch</strong> — an open-source notch app focused on media and widgets.</li>
+          <li><strong>Claude Code's own UI</strong> — the terminal or desktop app prompts, which Claude HUD falls back to.</li>
+        </ul>
+      </section>
+
+      <section id="ai-agents">
+        <h2>AI agents</h2>
+        <p>Issues and pull requests are welcome. Please keep the app dependency-free (Swift, SwiftUI, AppKit; the hook stays Python standard library) and run <code>./scripts/test.sh</code> before opening a PR.</p>
+        <p>AI coding agents: read <a href="https://github.com/nsozturk/claude-hud/blob/main/AGENTS.md" target="_blank" rel="noopener">AGENTS.md</a>. Plain-text summaries for language models are available as <a href="llms.txt">llms.txt</a> and <a href="llms-full.txt">llms-full.txt</a>.</p>
+      </section>
+
+      <section id="license">
+        <h2>License</h2>
+        <p><a href="https://github.com/nsozturk/claude-hud/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a> © 2026 Enes Öztürk</p>
+        <div class="callout">
+          <p>Claude HUD is not affiliated with Anthropic. "Claude" is a trademark of Anthropic, PBC.</p>
+        </div>
+      </section>
+
+      <footer>
+        <p>Claude HUD — free and open source. <a href="https://github.com/nsozturk/claude-hud" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/nsozturk/claude-hud/releases" target="_blank" rel="noopener">Releases</a> · <a href="llms.txt">llms.txt</a></p>
+        <p>Not affiliated with Anthropic. Hosted on GitHub Pages.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      var code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(function () {
+        btn.innerText = 'Copied!';
+        setTimeout(function () { btn.innerText = 'Copy'; }, 2000);
+      });
+    }
+
+    var searchInput = document.getElementById('docSearch');
+    function filterDocs() {
+      var q = searchInput.value.trim().toLowerCase();
+      var shown = 0;
+      document.querySelectorAll('main.content section').forEach(function (sec) {
+        var match = !q || sec.innerText.toLowerCase().indexOf(q) !== -1;
+        sec.style.display = match ? '' : 'none';
+        var link = document.querySelector('.nav-menu-item[data-target="' + sec.id + '"]');
+        if (link) link.style.display = match ? '' : 'none';
+        if (match) shown++;
+      });
+      document.querySelectorAll('.nav-section').forEach(function (grp) {
+        var any = Array.prototype.some.call(grp.querySelectorAll('.nav-menu-item'), function (a) { return a.style.display !== 'none'; });
+        grp.style.display = any ? '' : 'none';
+      });
+      document.getElementById('noResults').style.display = shown ? 'none' : 'block';
+    }
+    searchInput.addEventListener('input', filterDocs);
+
+    // highlight the active sidebar link while scrolling
+    var links = document.querySelectorAll('.nav-menu-item');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            links.forEach(function (a) { a.classList.toggle('active', a.dataset.target === e.target.id); });
+          }
+        });
+      }, { rootMargin: '-80px 0px -65% 0px' });
+      document.querySelectorAll('main.content section').forEach(function (s) { io.observe(s); });
+    }
+  </script>
+</body>
+</html>

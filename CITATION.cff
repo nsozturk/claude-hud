@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use or mention Claude HUD, please cite it as below."
+title: "Claude HUD"
+abstract: "Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows."
+type: software
+authors:
+  - given-names: "Enes"
+    family-names: "Öztürk"
+    alias: "nsozturk"
+repository-code: "https://github.com/nsozturk/claude-hud"
+url: "https://nsozturk.github.io/claude-hud/"
+license: MIT
+version: "1.0.0"
+date-released: "2026-11-06"
+keywords:
+  - claude-code
+  - macos
+  - notch
+  - menu-bar
+  - swiftui
+  - ai-agent

@@ -1,0 +1,12 @@
+# Build output
+build/
+bin/ClaudeHUDPreview
+*.dSYM
+
+# Local scratch and old captures
+tmp/
+/screenshots/
+*.log
+
+# macOS
+.DS_Store
