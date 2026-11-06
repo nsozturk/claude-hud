@@ -9,6 +9,7 @@
 
 import AppKit
 import CoreAudio
+import UniformTypeIdentifiers
 
 @MainActor
 public enum HUDQuiet {
@@ -69,9 +70,60 @@ public enum HUDQuiet {
     /// Sounds still playing; held so a copy is not freed mid-play.
     private static var playing: [NSSound] = []
 
-    /// Plays a named sound at the chosen volume (a copy, so quick arrivals can overlap).
+    /// Custom sounds are stored as "file:<path>" and live in the app's own folder.
+    public static let customPrefix = "file:"
+    public static var customSoundsFolder: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Claude HUD/Sounds", isDirectory: true)
+    }
+
+    /// Display name: the system sound name, or the custom file's name without extension.
+    public static func displayName(_ value: String) -> String {
+        value.hasPrefix(customPrefix)
+            ? URL(fileURLWithPath: String(value.dropFirst(customPrefix.count))).deletingPathExtension().lastPathComponent
+            : value
+    }
+
+    /// Ask for an audio file, copy it into the app's folder (so moving the original never
+    /// breaks it) and return the value to store, or nil if cancelled / not playable.
+    public static func chooseCustomSound() -> String? {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.audio]
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a sound for Claude HUD"
+        NSApp.activate()
+        guard panel.runModal() == .OK, let src = panel.url, NSSound(contentsOf: src, byReference: true) != nil else { return nil }
+        do {
+            try FileManager.default.createDirectory(at: customSoundsFolder, withIntermediateDirectories: true)
+            let dest = customSoundsFolder.appendingPathComponent(src.lastPathComponent)
+            if dest.path != src.path {
+                try? FileManager.default.removeItem(at: dest)
+                try FileManager.default.copyItem(at: src, to: dest)
+            }
+            hudLog("🔈 Custom sound added: \(dest.lastPathComponent)", category: "QUIET")
+            return customPrefix + dest.path
+        } catch {
+            hudLog("⚠️ Could not copy sound: \(error.localizedDescription)", category: "QUIET")
+            return nil
+        }
+    }
+
+    /// Custom sounds already copied into the app's folder, offered again in every picker.
+    public static func customSounds() -> [String] {
+        let files = (try? FileManager.default.contentsOfDirectory(at: customSoundsFolder, includingPropertiesForKeys: nil)) ?? []
+        return files.filter { !$0.lastPathComponent.hasPrefix(".") }.map { customPrefix + $0.path }.sorted()
+    }
+
+    private static func sound(for value: String) -> NSSound? {
+        if value.hasPrefix(customPrefix) {
+            return NSSound(contentsOf: URL(fileURLWithPath: String(value.dropFirst(customPrefix.count))), byReference: true)
+        }
+        return NSSound(named: value)?.copy() as? NSSound
+    }
+
+    /// Plays a sound at the chosen volume (a copy, so quick arrivals can overlap).
     public static func play(_ name: String) {
-        guard name != "None", let sound = NSSound(named: name)?.copy() as? NSSound else { return }
+        guard name != "None", let sound = sound(for: name) else { return }
         sound.volume = Float(HUDSettingsStore.shared.soundVolume)
         playing.removeAll { !$0.isPlaying }
         playing.append(sound)

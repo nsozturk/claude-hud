@@ -328,15 +328,29 @@ public struct ClaudeHUDSettingsView: View {
         }
     }
 
-    /// A system-sound picker with a play button; changing it also plays the new sound.
+    private static let chooseFileTag = "__choose_file__"
+
+    /// A sound picker (system sounds, your own files, "Choose file…") with a play button.
     private func soundRow(_ title: String, _ name: Binding<String>) -> some View {
         HStack(spacing: 8) {
             Text(title).font(.system(size: 11.5)).foregroundColor(ClaudeHUDTheme.secondaryText)
             Spacer(minLength: 4)
             Picker("", selection: Binding(get: { name.wrappedValue },
-                                          set: { name.wrappedValue = $0; HUDQuiet.play($0) })) {
+                                          set: { new in
+                                              if new == Self.chooseFileTag {
+                                                  // Keep the old sound if the file dialog is cancelled.
+                                                  if let picked = HUDQuiet.chooseCustomSound() { name.wrappedValue = picked; HUDQuiet.play(picked) }
+                                              } else { name.wrappedValue = new; HUDQuiet.play(new) }
+                                          })) {
                 Text("None").tag("None")
                 ForEach(HUDQuiet.systemSounds, id: \.self) { Text($0).tag($0) }
+                let custom = Set(HUDQuiet.customSounds() + [name.wrappedValue].filter { $0.hasPrefix(HUDQuiet.customPrefix) })
+                if !custom.isEmpty {
+                    Divider()
+                    ForEach(custom.sorted(), id: \.self) { Text("♪ " + HUDQuiet.displayName($0)).tag($0) }
+                }
+                Divider()
+                Text("Choose file…").tag(Self.chooseFileTag)
             }
             .labelsHidden()
             .pickerStyle(.menu)
