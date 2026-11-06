@@ -111,25 +111,26 @@ public final class HUDMenuBarController: NSObject, NSMenuDelegate {
             .store(in: &cancellables)
     }
     
-    /// The app icon reduced to a template glyph: notch tab on top, a card with a dot and two
-    /// lines under it. Template, so macOS tints it for light/dark menu bars.
+    /// The app icon reduced to a menu-bar glyph: notch tab and status dot in the app's terracotta,
+    /// card outline and text lines in the menu bar's own label color (drawn per appearance, so
+    /// it stays white on a dark menu bar and black on a light one).
     static let menuBarIcon: NSImage = {
+        let terracotta = NSColor(srgbRed: 0.851, green: 0.420, blue: 0.263, alpha: 1)
         let img = NSImage(size: NSSize(width: 18, height: 16), flipped: true) { _ in
-            NSColor.black.setFill()
-            // notch tab
+            terracotta.setFill()
             NSBezierPath(roundedRect: NSRect(x: 5, y: 0, width: 8, height: 2.6), xRadius: 1.2, yRadius: 1.2).fill()
-            // card outline
+            NSBezierPath(ovalIn: NSRect(x: 4.4, y: 6.2, width: 2.6, height: 2.6)).fill()
+
+            NSColor.labelColor.setStroke()
             let card = NSBezierPath(roundedRect: NSRect(x: 1.75, y: 3.75, width: 14.5, height: 10.5), xRadius: 2.6, yRadius: 2.6)
             card.lineWidth = 1.5
-            NSColor.black.setStroke()
             card.stroke()
-            // dot + two text lines
-            NSBezierPath(ovalIn: NSRect(x: 4.4, y: 6.2, width: 2.6, height: 2.6)).fill()
+            NSColor.labelColor.setFill()
             NSBezierPath(roundedRect: NSRect(x: 4.4, y: 9.6, width: 9.2, height: 1.5), xRadius: 0.75, yRadius: 0.75).fill()
             NSBezierPath(roundedRect: NSRect(x: 8.2, y: 6.8, width: 5.4, height: 1.5), xRadius: 0.75, yRadius: 0.75).fill()
             return true
         }
-        img.isTemplate = true
+        img.isTemplate = false   // keep the terracotta; the label-color parts follow the menu bar
         img.accessibilityDescription = "Claude HUD"
         return img
     }()
