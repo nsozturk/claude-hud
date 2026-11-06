@@ -50,27 +50,71 @@ No answer within two minutes? The card steps aside and Claude asks in its own wi
 - **Scanner line** along the card edge: 10 patterns, 12 color presets plus any custom color, speed, thickness, beam, glow, trail, direction.
 - Lives in the menu bar; **Show in Dock** is a switch. First launch walks you through setup.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![A multiple-choice question card dropping out of the notch](assets/screenshots/multi-question.jpg) | ![A permission card with Allow once, Always allow and Deny](assets/screenshots/permission-card.jpg) |
+| Multiple-choice questions, step by step | Permission prompts: Allow once · Always allow · Deny |
+| ![A next-step session card with a reply box and its own buttons](assets/screenshots/session-card-reply.jpg) | ![The first-launch welcome window](assets/screenshots/welcome.jpg) |
+| Claude desktop next-step questions, with a free-text reply | First-launch welcome |
+| ![Quiet and Replies settings: snooze, quiet during calls, hide from screen sharing](assets/screenshots/settings-quiet-replies.jpg) | ![Scanner line settings: patterns, colors, speed, glow, trail](assets/screenshots/settings-scanner-line.jpg) |
+| Snooze, quiet during calls, replies | Scanner line patterns and colors |
+| ![Rebindable global shortcuts in settings](assets/screenshots/settings-shortcuts.jpg) | |
+| Global shortcuts you can rebind | |
+
 ## Requirements
 
 - macOS 14 Sonoma or later (a MacBook with a notch is best; any Mac works in top-right mode)
 - Claude Code (CLI or the Claude desktop app)
-- To build: the Swift toolchain from Xcode or the Command Line Tools (`xcode-select --install`). Xcode 26+ also compiles the new-style app icon; older toolchains fall back to the classic icon.
+- To build from source: the Swift toolchain from Xcode or the Command Line Tools (`xcode-select --install`). Xcode 26+ also compiles the new-style app icon; older toolchains fall back to the classic icon.
 
 ## Install
+
+### Download (recommended)
+
+Get the latest files from **[Releases](https://github.com/nsozturk/claude-hud/releases/latest)**:
+
+| File | For |
+|---|---|
+| `Claude-HUD-<version>.dmg` | Any Mac — universal (Apple Silicon + Intel). Open it and drag **Claude HUD** to **Applications**. |
+| `Claude-HUD-<version>-universal.zip` | Same app as a zip |
+| `Claude-HUD-<version>-arm64.zip` | Apple Silicon only (smaller) |
+| `Claude-HUD-<version>-x86_64.zip` | Intel only (smaller) |
+| `SHA256SUMS.txt` | Checksums: `shasum -a 256 -c SHA256SUMS.txt` |
+
+The app is not notarized by Apple yet, so the first launch is blocked with "Apple could not verify…". Open it once in one of these ways:
+
+- **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to Claude HUD; or
+- in Terminal: `xattr -dr com.apple.quarantine "/Applications/Claude HUD.app"`
+
+### Homebrew
+
+Each release also carries a Homebrew cask (`claude-hud.rb`). Once it is published in a tap, install with:
+
+```bash
+brew install --cask nsozturk/tap/claude-hud
+```
+
+### Build from source
 
 ```bash
 git clone https://github.com/nsozturk/claude-hud.git
 cd claude-hud
-./scripts/build-app.sh            # builds "build/Claude HUD.app"
+./scripts/build-app.sh            # builds "build/Claude HUD.app" for this Mac
 cp -R "build/Claude HUD.app" /Applications/
 open "/Applications/Claude HUD.app"
 ```
+
+`./scripts/package-release.sh` builds every release file above (universal DMG and zips, per-architecture zips, checksums, cask) into `build/release/`.
 
 The build is signed ad hoc. To keep macOS permissions across rebuilds, sign with your own certificate:
 
 ```bash
 SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./scripts/build-app.sh
 ```
+
+### First launch
 
 On first launch Claude HUD shows a short welcome:
 
@@ -112,7 +156,7 @@ Onboarding/     first-launch welcome and hook installer
 Preview/        live preview on a drawn MacBook screen
 Packaging/      Info.plist, app icon (.icon + .icns)
 bin/            claude-hud-hook
-scripts/        build-app.sh
+scripts/        build-app.sh, package-release.sh, test.sh
 Tests/          transcript replay test
 ```
 

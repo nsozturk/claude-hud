@@ -1,8 +1,28 @@
-# Claude HUD
+<p align="center">
+  <img src="assets/banner.png" alt="Claude HUD — answer Claude Code from your MacBook notch" width="100%">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-D96B43" alt="Version 1.0.0">
+  <img src="https://img.shields.io/badge/Swift-5.9%2B-F05138?logo=swift&logoColor=white" alt="Swift 5.9+">
+  <img src="https://img.shields.io/badge/license-MIT-34C78C" alt="MIT license">
+  <img src="https://img.shields.io/badge/network-none-3C95F6" alt="No network access">
+  <a href="AGENTS.md"><img src="https://img.shields.io/badge/AI%20agent-native%20ready-A78BFA" alt="AI agent ready"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple" alt="macOS 14+">
+</p>
+
+<p align="center">
+  <code>claude-code</code> <code>macos</code> <code>notch</code> <code>dynamic-island</code> <code>menu-bar-app</code>
+  <code>swiftui</code> <code>ai-agent</code> <code>developer-tools</code> <code>claude-code-hooks</code>
+</p>
 
 **Claude HUD is a free, open-source macOS menu-bar app that shows Claude Code's questions and permission prompts in the MacBook notch, so you can answer them without switching windows.**
 
 When a Claude Code session stops to ask you something — a multiple-choice question, "Allow this command?", or the next-step box of the Claude desktop app — a card drops out of the notch (or floats at the top right). Pick an answer with a click or a shortcut and keep working.
+
+<p align="center">
+  <img src="assets/screenshots/settings-and-preview.jpg" alt="Claude HUD settings window with a live card preview on a drawn MacBook screen" width="90%">
+</p>
 
 > Claude HUD is an independent project. It is not made, endorsed or supported by Anthropic. "Claude" is a trademark of Anthropic, PBC; the name here only says which tool the app works with.
 
@@ -30,27 +50,71 @@ No answer within two minutes? The card steps aside and Claude asks in its own wi
 - **Scanner line** along the card edge: 10 patterns, 12 color presets plus any custom color, speed, thickness, beam, glow, trail, direction.
 - Lives in the menu bar; **Show in Dock** is a switch. First launch walks you through setup.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![A multiple-choice question card dropping out of the notch](assets/screenshots/multi-question.jpg) | ![A permission card with Allow once, Always allow and Deny](assets/screenshots/permission-card.jpg) |
+| Multiple-choice questions, step by step | Permission prompts: Allow once · Always allow · Deny |
+| ![A next-step session card with a reply box and its own buttons](assets/screenshots/session-card-reply.jpg) | ![The first-launch welcome window](assets/screenshots/welcome.jpg) |
+| Claude desktop next-step questions, with a free-text reply | First-launch welcome |
+| ![Quiet and Replies settings: snooze, quiet during calls, hide from screen sharing](assets/screenshots/settings-quiet-replies.jpg) | ![Scanner line settings: patterns, colors, speed, glow, trail](assets/screenshots/settings-scanner-line.jpg) |
+| Snooze, quiet during calls, replies | Scanner line patterns and colors |
+| ![Rebindable global shortcuts in settings](assets/screenshots/settings-shortcuts.jpg) | |
+| Global shortcuts you can rebind | |
+
 ## Requirements
 
 - macOS 14 Sonoma or later (a MacBook with a notch is best; any Mac works in top-right mode)
 - Claude Code (CLI or the Claude desktop app)
-- To build: the Swift toolchain from Xcode or the Command Line Tools (`xcode-select --install`). Xcode 26+ also compiles the new-style app icon; older toolchains fall back to the classic icon.
+- To build from source: the Swift toolchain from Xcode or the Command Line Tools (`xcode-select --install`). Xcode 26+ also compiles the new-style app icon; older toolchains fall back to the classic icon.
 
 ## Install
+
+### Download (recommended)
+
+Get the latest files from **[Releases](https://github.com/nsozturk/claude-hud/releases/latest)**:
+
+| File | For |
+|---|---|
+| `Claude-HUD-<version>.dmg` | Any Mac — universal (Apple Silicon + Intel). Open it and drag **Claude HUD** to **Applications**. |
+| `Claude-HUD-<version>-universal.zip` | Same app as a zip |
+| `Claude-HUD-<version>-arm64.zip` | Apple Silicon only (smaller) |
+| `Claude-HUD-<version>-x86_64.zip` | Intel only (smaller) |
+| `SHA256SUMS.txt` | Checksums: `shasum -a 256 -c SHA256SUMS.txt` |
+
+The app is not notarized by Apple yet, so the first launch is blocked with "Apple could not verify…". Open it once in one of these ways:
+
+- **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to Claude HUD; or
+- in Terminal: `xattr -dr com.apple.quarantine "/Applications/Claude HUD.app"`
+
+### Homebrew
+
+Each release also carries a Homebrew cask (`claude-hud.rb`). Once it is published in a tap, install with:
+
+```bash
+brew install --cask nsozturk/tap/claude-hud
+```
+
+### Build from source
 
 ```bash
 git clone https://github.com/nsozturk/claude-hud.git
 cd claude-hud
-./scripts/build-app.sh            # builds "build/Claude HUD.app"
+./scripts/build-app.sh            # builds "build/Claude HUD.app" for this Mac
 cp -R "build/Claude HUD.app" /Applications/
 open "/Applications/Claude HUD.app"
 ```
+
+`./scripts/package-release.sh` builds every release file above (universal DMG and zips, per-architecture zips, checksums, cask) into `build/release/`.
 
 The build is signed ad hoc. To keep macOS permissions across rebuilds, sign with your own certificate:
 
 ```bash
 SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./scripts/build-app.sh
 ```
+
+### First launch
 
 On first launch Claude HUD shows a short welcome:
 
@@ -92,7 +156,7 @@ Onboarding/     first-launch welcome and hook installer
 Preview/        live preview on a drawn MacBook screen
 Packaging/      Info.plist, app icon (.icon + .icns)
 bin/            claude-hud-hook
-scripts/        build-app.sh
+scripts/        build-app.sh, package-release.sh, test.sh
 Tests/          transcript replay test
 ```
 
@@ -131,8 +195,8 @@ Partly. It focuses on one job — answering an AI coding agent fast — and leav
 
 ## Contributing
 
-Issues and pull requests are welcome. Please keep the app dependency-free (Swift, SwiftUI, AppKit; the hook stays Python standard library) and run `./scripts/test.sh` before opening a PR. AI coding agents: read [AGENTS.md](https://github.com/nsozturk/claude-hud/blob/main/AGENTS.md).
+Issues and pull requests are welcome. Please keep the app dependency-free (Swift, SwiftUI, AppKit; the hook stays Python standard library) and run `./scripts/test.sh` before opening a PR. AI coding agents: read [AGENTS.md](AGENTS.md).
 
 ## License
 
-[MIT](https://github.com/nsozturk/claude-hud/blob/main/LICENSE) © 2026 Enes Öztürk
+[MIT](LICENSE) © 2026 Enes Öztürk
